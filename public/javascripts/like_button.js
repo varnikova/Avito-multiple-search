@@ -15,7 +15,7 @@ class App extends Component {
   }
   RequestByName(){
     ajaxReq("/ResArr/", {"Name":document.getElementById("Request").value, //добавила кавычки в названии параметров
-      "Restrict":document.getElementById("Restrict").value}, function(result){
+      "Restrict":document.getElementById("Restrict").value,"BadRestrict":document.getElementById("BadRestrict").value}, function(result){
       this.setState({Items: result});
 
     }.bind(this));
@@ -23,7 +23,9 @@ class App extends Component {
   render() {
     return (<div>
           <p>ссылка<input type="text" id="Request"></input> <br/>
-            условие<input type="text" id="Restrict"></input>
+            условие(разделитель /)<input type="text" id="Restrict"></input>
+            <br/>
+            минус-слова(разделитель /)<input type="text" id="BadRestrict"></input>
             <button onClick={this.RequestByName}>Запрос</button>
           </p>
           <SearchResult Results={this.state.Items}/>
