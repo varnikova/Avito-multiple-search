@@ -29,12 +29,30 @@ app.post('/ResArr/', function(req, res) {
     let suited=false;
     console.log(news_base_url);
    get_page_content(news_base_url + 0, 0 );
+   let short_url=news_base_url.replace('https://www.avito.ru', '');
+
+    var options = {
+        url: short_url,
+        headers: { // Warning! refer from spb
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+            'accept-encoding': 'gzip, deflate, br',
+            'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+            'cache-control':' max-age=0',
+            'cookie':' u=2fqxwla0.14n1lhd.g7s488jsve; buyer_selected_search_radius4=0_general; __cfduid=d99ff3c2323834d751575321677a31d961570616225; _ga=GA1.2.175421165.1570616231; buyer_tooltip_location=0; _ym_uid=1570616232899017785; _ym_d=1570616232; _fbp=fb.1.1570616233519.1162486641; buyer_popup_location=653240; abp=2; __gads=ID=01081209e0ca6a0a:T=1572839409:S=ALNI_MY7jgFC11AVhE0P6i_ltkMlo0d7rw; _nfh=8c3cc2deaf3e662199b1e622dbe03b02; view=gallery; buyer_location_id=653240; sessid=92e9ee0a477ce9961208f4cff4d79f39.1573007987; v=1573007987; luri=sankt-peterburg; dfp_group=4; _gid=GA1.2.2006031881.1573007991; f=5.32e32548b6f3e9784b5abdd419952845a68643d4d8df96e9a68643d4d8df96e9a68643d4d8df96e9a68643d4d8df96e94f9572e6986d0c624f9572e6986d0c624f9572e6986d0c62ba029cd346349f36c1e8912fd5a48d02c1e8912fd5a48d0246b8ae4e81acb9fa143114829cf33ca746b8ae4e81acb9fa46b8ae4e81acb9fae992ad2cc54b8aa8b175a5db148b56e9bcc8809df8ce07f640e3fb81381f3591fed88e598638463b2da10fb74cac1eab2da10fb74cac1eab2da10fb74cac1eab2da10fb74cac1eab2da10fb74cac1eab2da10fb74cac1eab2da10fb74cac1eab2da10fb74cac1eab2da10fb74cac1eab2da10fb74cac1eab2da10fb74cac1eab2da10fb74cac1eabfdb229eec3b9ed9a0c79affd4e5f1d11162fe9fd7c8e976774740f960ca8325a5abd6b432aa1e08d5e61d702b2ac73f790a042de6ed0741d230c40ac510863bf61da5109fec5256288ccc449ccef517f8732de926882853a9d9b2ff8011cc827c4d07ec9665f0b70915ac1de0d034112ffa066498e9dae8a16a26f04a98f8b0d2da10fb74cac1eab2da10fb74cac1eab2c951d5df734fbe304aa2bcefe8506e0845a8aa72c58074e; _ym_visorc_34241905=b; _dc_gtm_UA-2546784-1=1; _ym_visorc_106253=w; _ym_isad=1; _ym_visorc_188382=w; _ym_visorc_189903=w; sx=H4sIAAAAAAACAwXBMQ6AIAwAwL90doBQEPkNAWlMhxJrYCD83bsFdeSOIwRfeSIxo8wZKRqBtGBAgkdbf20e7UMkQaZSopCKstIsDAfckKw%2FnbkQjdv7B8b73DhUAAAA; so=1573008000; buyer_from_page=catalog',
+            'referer': 'https://www.avito.ru',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'same-origin',
+            'sec-fetch-user': '?1',
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36'
+        }
+    };
 
     function get_page_content( url, i,) {
         request(url, function ( error, response, body ) {
 
             if( !error ) {
-                console.log(body);
+                //console.log(body);
                 var $ = cheerio.load(body),
                     newses = $('.item');
 
@@ -48,7 +66,7 @@ app.post('/ResArr/', function(req, res) {
                         if ($(this)[0].children[0])
                             if($(this)[0].children[0].data!=="В избранное" && $(this)[0].children[0].data!== '') { //находим название товара
                                 //console.log($(this)[0].children[0].data);
-                                 console.log("_______________________________")
+                                 //console.log("_______________________________")
                                     title+=$(this)[0].children[0].data;
                                     end=true;
                             }
