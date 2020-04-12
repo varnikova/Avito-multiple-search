@@ -1,0 +1,15 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+.Block{
+  background-color: rgba(119, 96, 241, 0.22);
+  width: 32%;
+  display: inline-block;
+  margin: 5px;
+}

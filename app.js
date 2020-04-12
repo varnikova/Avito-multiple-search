@@ -12,6 +12,9 @@ var request = require('request'),
     res_arr = [],
     ind = 0,
     count_posts = 1;
+let random=null;
+min = 1000; //в продакшн 5000
+max = 6000; //не меньше 50000
 
 
 let server = app.listen(app.get('port'), function(){                                        //identification
@@ -21,17 +24,18 @@ let server = app.listen(app.get('port'), function(){                            
 });
 
 app.post('/ResArr/', function(req, res) {
-    news_base_url=req.body.Name+"&view=gallery";
+   // news_base_url=req.body.Name;
+    news_base_url=req.body.Name+"&view=gallery"; //учесть что вид бывает галерея и нет
     restrict=req.body.Restrict; //взяла условие из запроса
     badrestrict=req.body.BadRestrict;
-    let restricts=restrict.split('/');
-    let badrestricts=badrestrict.split('/');
+    let restricts=restrict.split('%');
+    let badrestricts=badrestrict.split('%');
     let suited=false;
     console.log(news_base_url);
    get_page_content(news_base_url + 0, 0 );
    let short_url=news_base_url.replace('https://www.avito.ru', '');
 
-    var options = {
+    let options = {
         url: short_url,
         headers: { // Warning! refer from spb
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
@@ -50,31 +54,51 @@ app.post('/ResArr/', function(req, res) {
 
     function get_page_content( url, i,) {
         request(url, function ( error, response, body ) {
-
             if( !error ) {
                 //console.log(body);
                 var $ = cheerio.load(body),
                     newses = $('.item');
+                if (newses.length==0) {console.log("Ничего не найдено либо выдали бан");}
 
                 newses.each(function () {
                     var self = $(this),
                     cont = self.find('.item__line'); //находим объявление
                     var title;
+                    var price;
                     var temp=false;
                     var end=false;
-                    cont.find('span').each(function () {
+                    /*cont.find('span').each(function () {
                         if ($(this)[0].children[0])
                             if($(this)[0].children[0].data!=="В избранное" && $(this)[0].children[0].data!== '') { //находим название товара
                                 //console.log($(this)[0].children[0].data);
-                                 //console.log("_______________________________")
+                                // console.log("_______________________________")
                                     title+=$(this)[0].children[0].data;
                                     end=true;
                             }
 
+                    });*/
+                    console.log("desc "+ cont.find('.description')[0]);
+                    cont.find('.description').each(function () {
+                        //console.log('зашли в описание')
+                         title = $(this).find('.snippet-link')[0].children[0].data;
+                         price = $(this).find('.price')[0].children[0].data;
+                        console.log(title +" "+ price);
+                        if(title && price){
+                            // console.log(title +" "+ price);
+                            end=true;
+                        }
+                        //console.log($(this)[0].data);
+                    /*    if ($(this)[0].children[0])
+                            if($(this)[0].children[0].data!==''  && $(this)[0].children[0].data!==' ') { //находим название товара
+                                //console.log($(this)[0].children[0].data);
+                                // console.log("_______________________________")
+
+                            }*/
+
                     });
                     if(end) {
 
-                        restricts.forEach(function(r) { //ищем хотя бы одно из поисковых слов в названии
+                        restricts.forEach(function(r) { //ищем хотя бы одно из плюс слов в названии
                             if(title.indexOf(r)+1) {
                               suited=true;
                               return suited;
@@ -95,7 +119,10 @@ app.post('/ResArr/', function(req, res) {
                             img2: cont.find('img').attr('data-srcpath'),
                             content:""
                             }
-                        get_post_content(link, ind);
+                            //случайная пауза перед заходом в объявление
+                        const postpause = min + Math.random() * (max - min);
+                        setTimeout(get_post_content, postpause, link, ind);
+                        //get_post_content(link, ind);
                         ind++;
                     }
                 });
@@ -116,7 +143,8 @@ app.post('/ResArr/', function(req, res) {
                 if (!error) {
                     var $ = cheerio.load(body, {decodeEntities: false});
                     //console.log($('.item-description').html())
-                    res_arr[array_index].content = $('.item-description').html();
+                    res_arr[array_index].content = $('.item-description').html(); //item-address__string
+                    res_arr[array_index].adress = $('.item-address__string').text();
                     restricts.forEach(function(r) { //ищем хотя бы одно из поисковых слов в названии
                         if(res_arr[array_index].content.indexOf(r)+1) {
                             suited=true;

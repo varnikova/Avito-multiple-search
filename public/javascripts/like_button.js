@@ -23,9 +23,10 @@ class App extends Component {
   render() {
     return (<div>
           <p>ссылка<input type="text" id="Request"></input> <br/>
-            условие(разделитель /)<input type="text" id="Restrict"></input>
+            <h2>При формировании ссылки не забудьте сортировку по дате! (и при необходимости ограничение "частные")</h2>
+            плюс-слова(разделитель %)<input type="text" id="Restrict"></input>
             <br/>
-            минус-слова(разделитель /)<input type="text" id="BadRestrict"></input>
+            минус-слова(разделитель %)<input type="text" id="BadRestrict"></input>
             <button onClick={this.RequestByName}>Запрос</button>
           </p>
           <SearchResult Results={this.state.Items}/>
@@ -46,6 +47,7 @@ class SearchResult extends React.Component{
       return ( <a href={item.link} >
             <div className="Block">
               <p className="Tittle"> {item.title}	</p>
+              <p className="Adress"> {item.adress}	</p>
               {item.img1 && <p className="img"><img src={item.img1} height="100px" width="100px" /></p>}
               {item.img2 && <p className="img"><img src={item.img2} height="100px" width="100px" /></p>}
               <div dangerouslySetInnerHTML={{
