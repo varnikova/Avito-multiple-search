@@ -22,7 +22,7 @@ class App extends Component {
   }
   render() {
     return (<div>
-          <p>ссылка<input type="text" id="Request"></input> <br/>
+          <p>ссылка<input type="text" id="Request" value={"https://www.avito.ru/sankt-peterburg/telefony?q=huawei+p30+pro"}></input> <br/>
             <h2>При формировании ссылки не забудьте сортировку по дате! (и при необходимости ограничение "частные")</h2>
             плюс-слова(разделитель %)<input type="text" id="Restrict"></input>
             <br/>
