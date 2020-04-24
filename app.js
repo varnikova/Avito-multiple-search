@@ -5,6 +5,7 @@ app.use(express.static('public'));
 app.set('port', process.env.PORT || 80);
 var jsonfile = require('jsonfile');
 app.use(bodyParser.json());
+var tunnel = require('tunnel');
 var request = require('request'),
     cheerio = require('cheerio'),
     fs = require('fs'),
@@ -16,10 +17,7 @@ let random = null;
 min = 1000; //в продакшн 5000
 max = 6000; //не меньше 50000
 var proxyArr = [];
-
 let server = app.listen(app.get('port'), function() { //identification
-
-
     console.log('Сервер запущен на  http://localhost:' + app.get('port') + '  Ctrl-C to terminate');
     let filename = "proxyList.txt";
     fs.readFile(filename, 'utf8', function(err, data) {
@@ -28,8 +26,8 @@ let server = app.listen(app.get('port'), function() { //identification
         proxyArr = data.split("\n");
     });
 });
-
 app.post('/ResArr/', function(req, res) {
+    iLoveDash();
     // news_base_url=req.body.Name;
     news_base_url = req.body.Name + "&view=gallery"; //учесть что вид бывает галерея и нет
     restrict = req.body.Restrict; //взяла условие из запроса
@@ -39,26 +37,33 @@ app.post('/ResArr/', function(req, res) {
     let suited = false;
     console.log(news_base_url);
     //let short_url = news_base_url.replace('https://www.avito.ru', '');
-
     let options = {
-        url: news_base_url,
-        //proxy: "http://95.85.36.236:8080"
+        headers: {
+            'User-Agent': tunnel.httpOverHttp({
+                proxy: {
+                    host: "182.71.102.215",
+                    port: 3128,
+                    headers: "add's headers for request"
+                }
+            })
+        },
+        url: news_base_url
     };
     //options.proxy=options.proxy.substring(0, options.proxy.length - 2);
     console.log(options);
     get_page_content(options, 0);
+
     function get_page_content(options, i, ) {
+
         request(options, function(error, response, body) {
             //console.log(body);
             if (!error) {
                 //console.log(body);
                 var $ = cheerio.load(body),
                     newses = $('.item');
-
                 if (newses.length == 0) {
                     console.log("Ничего не найдено либо выдали бан");
                 }
-
                 newses.each(function() {
                     var self = $(this),
                         cont = self.find('.item__line'); //находим объявление
@@ -93,22 +98,20 @@ app.post('/ResArr/', function(req, res) {
                                     // console.log("_______________________________")
 
                                 }*/
-
                     });
                     if (end) {
-
-                        // restricts.forEach(function(r) { //ищем хотя бы одно из плюс слов в названии
-                        //     if (title.indexOf(r) + 1) {
-                        //         suited = true;
-                        //         return suited;
-                        //     }
-                        // });
-                        // badrestricts.forEach(function(br) { //ищем хотя бы одно из минус слов в названии
-                        //     if (title.indexOf(br) + 1) {
-                        //         suited = false;
-                        //         return suited;
-                        //     }
-                        // });
+                        restricts.forEach(function(r) { //ищем хотя бы одно из плюс слов в названии
+                            if (title.indexOf(r) >= 0) {
+                                suited = true;
+                                return suited;
+                            }
+                        });
+                        badrestricts.forEach(function(br) { //ищем хотя бы одно из минус слов в названии
+                            if (title.indexOf(br) >= 0) {
+                                suited = false;
+                                return suited;
+                            }
+                        });
                         link = "https://www.avito.ru" + self.find('a').attr('href');
                         var title = title.replace("undefined", "");
                         res_arr[ind] = {
@@ -126,19 +129,14 @@ app.post('/ResArr/', function(req, res) {
                     }
                 });
                 //console.log(res_arr);
-
-
             } else {
                 console.log("Произошла ошибка: " + error);
             }
         });
-
     }
-
     // Получение контента
     function get_post_content(link, array_index) {
         request(link, function(error, response, body) {
-
             if (res_arr[array_index])
                 if (!error) {
                     var $ = cheerio.load(body, {
@@ -147,25 +145,30 @@ app.post('/ResArr/', function(req, res) {
                     //console.log($('.item-description').html())
                     res_arr[array_index].content = $('.item-description').html(); //item-address__string
                     res_arr[array_index].adress = $('.item-address__string').text();
-                    // restricts.forEach(function(r) { //ищем хотя бы одно из поисковых слов в названии
-                    //     if (res_arr[array_index].content.indexOf(r) + 1) {
-                    //         suited = true;
-                    //         return suited;
-                    //     }
-                    // });
-                    // badrestricts.forEach(function(br) { //ищем хотя бы одно из минус слов в названии
-                    //     if (res_arr[array_index].content.indexOf(br) + 1) {
-                    //         suited = false;
-                    //         return suited;
-                    //     }
-                    // });
+                    badrestricts.forEach(function(br) { //ищем хотя бы одно из минус слов в описании
+                        if (res_arr[array_index].content.indexOf(br) >= 0) {
+                            suited = false;
+                            return suited;
+                        }
+                        if (!suited) {
+                            res_arr[array_index] = 0;
+                        }
+                    });
+                    restricts.forEach(function(r) { //ищем хотя бы одно из поисковых слов в описании
+                        if (res_arr[array_index].content.indexOf(r) >= 0) {
+                            suited = true;
+                            return suited;
+                        }
+                        if (!suited) {
+                            res_arr[array_index] = 0;
+                        }
+                    });
                 } else {
                     console.log("Произошла ошибка: " + error);
                 }
             /* console.log(count_posts)
              console.log(res_arr.length)*/
-            if (count_posts++ == res_arr.length) {
-
+            if (count_posts++ == res_arr.length && suited) {
                 res.send(res_arr)
                 //write_parse_res( file_json, JSON.stringify(res_arr) );
             }
@@ -173,18 +176,6 @@ app.post('/ResArr/', function(req, res) {
     }
 });
 
-
-// Имя файла в той же папке, где лежит файл скрипта
-var file_json = path.resolve(__dirname, 'parse_file.json');
-
-
-// Сохранение на диск
-function write_parse_res(file_json, str) {
-    fs.writeFile(file_json, str, function(err) {
-        if (err) {
-            console.log(err);
-        } else {
-            console.log('Добавил все');
-        }
-    });
+function iLoveDash(){
+    coтыщle.log("yura+dasha=love");
 }
