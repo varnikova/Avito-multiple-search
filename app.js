@@ -86,9 +86,39 @@ app.post("/ResArr/", function (req, res) {
 
                     });*/
           //console.log("desc " + cont.find('.description')[0]);
-          self.find(".description").each(function () {
+          self.find(".description").each(function () {                 //цикл по всем превью объявлений на странице
+            title = $(this).find(".snippet-link")[0].children[0].data; //название текущего объявление
+            if (!badrestricts.some(function(br) { //если минус-слов нет в названии
+              return title.indexOf(br) >= 0 //если найдено минус слово возвращает истину
+            })) {
+              let link = "https://www.avito.ru" + this.find("a").attr("href"); //ищем ссылку на текующее обьявление
+              let post = get_post_content(link, id);      //post.content это описание
+              if (!badrestricts.some(function(br) { //если минус-слов нет в описании
+                return post.content.indexOf(br) >= 0 //если найдено минус-слово возвращает истину
+              }))
+              {
+                if (restricts.some(function (r) { //если плюс-слово найдено
+                  return title.indexOf(r) >= 0 //если найдено плюс-слово возвращает истину
+                })) {  res_arr.push(this); }//добавляем в итоговый массив
+                {
+                  if (restricts.some(function (r) { //если плюс-слов есть в описании
+                    return post.content.indexOf(r) >= 0 //если найдено плюс-слово возвращает истину
+                  })) {
+                    res_arr.push(this);//добавляем в итоговый массив
+                  }
+                }
+              }
+            }
+            });
+
+
+
+
+
+
+            if ($(this).find(".snippet-link")[0].children[0].data)
             //console.log('зашли в описание')
-            title = $(this).find(".snippet-link")[0].children[0].data;      //ищем тайтл
+                  //ищем тайтл
             price = $(this).find(".snippet-price")[0].children[0].data;     //ищем прайс
             //console.log(title + " " + price);
             if (title && price) {
@@ -101,23 +131,9 @@ app.post("/ResArr/", function (req, res) {
                                     //console.log($(this)[0].children[0].data);
                                     // console.log("_______________________________")
 
-                                }*/
+           //конец моего алгоритма для слов!!!!!!!!тупой Юра                     }*/
           });
           if (end) {
-            restricts.forEach(function (r) {
-              //ищем хотя бы одно из плюс слов в названии
-              if (title.indexOf(r) >= 0) {
-                suited = true;
-                return suited;
-              }
-            });
-            badrestricts.forEach(function (br) {
-              //ищем хотя бы одно из минус слов в названии
-              if (title.indexOf(br) >= 0) {
-                suited = false;
-                return suited;
-              }
-            });
             link = "https://www.avito.ru" + self.find("a").attr("href");
             var title = title.replace("undefined", "");
             res_arr[ind] = {
@@ -131,7 +147,7 @@ app.post("/ResArr/", function (req, res) {
               //::TODO убрать или нет??
             const postpause = min + Math.random() * (max - min);
             setTimeout(get_post_content, postpause, link, ind);
-            //get_post_content(link, ind);
+            //
             ind++;
           }
         });
@@ -152,32 +168,14 @@ app.post("/ResArr/", function (req, res) {
           //console.log($('.item-description').html())
           res_arr[array_index].content = $(".item-description").html(); //item-address__string
           res_arr[array_index].adress = $(".item-address__string").text();
-          badrestricts.forEach(function (br) {
-            //ищем хотя бы одно из минус слов в описании
-            if (res_arr[array_index].content.indexOf(br) >= 0) {
-              suited = false;
-              return suited;
-            }
-            if (!suited) {
-              res_arr[array_index] = 0;
-            }
-          });
-          restricts.forEach(function (r) {
-            //ищем хотя бы одно из поисковых слов в описании
-            if (res_arr[array_index].content.indexOf(r) >= 0) {
-              suited = true;
-              return suited;
-            }
-            if (!suited) {
-              res_arr[array_index] = 0;
-            }
-          });
+
+
         } else {
           console.log("Произошла ошибка: " + error);
         }
       /* console.log(count_posts)
              console.log(res_arr.length)*/
-      if (count_posts++ == res_arr.length && suited) {
+      if (count_posts++ == res_arr.length) {
         res.send(res_arr);
         //write_parse_res( file_json, JSON.stringify(res_arr) );
       }
