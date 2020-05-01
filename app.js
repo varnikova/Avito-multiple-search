@@ -56,7 +56,6 @@ app.post("/ResArr/", function (req, res) {
 
 function get_page_content(options, restricts, badrestricts) {
   request(options, function (error, response, body) {
-    console.log(body);
     if (error) console.log(error);
     if (!error) {
       var $ = cheerio.load(body), //скаченый боди
@@ -64,10 +63,11 @@ function get_page_content(options, restricts, badrestricts) {
       if (newses.length == 0) {
         console.log("Ничего не найдено либо выдали бан");
       }
+      let itemsProcessed = 0;
       newses.each(function () {
         //по каждому идему
         var self = $(this);
-
+        itemsProcessed++;
         self.find(".description").each(function () {
           //цикл по всем превью объявлений на странице
           title = $(this)
@@ -80,16 +80,12 @@ function get_page_content(options, restricts, badrestricts) {
             })
           ) {
             let link = "https://www.avito.ru" + $(this).find("a").attr("href"); //ищем ссылку на текующее обьявление
-            async function get_post_content(link) {
-              const a = resolveAfterGetpage(link);
-              return await a;
-            }
             get_post_content(link).then((post) => {
               post.title = title.replace("undefined", "");
               post.price = $(this).find(".snippet-price")[0].children[0].data;
               post.img1 = self.find("img").attr("src");
               post.img2 = self.find("img").attr("data-srcpath");
-              console.log(post);
+
               if (
                 !badrestricts.some(function (br) {
                   //если минус-слов нет в описании
@@ -102,7 +98,7 @@ function get_page_content(options, restricts, badrestricts) {
                     return title.indexOf(r.toLowerCase()) >= 0; //если найдено плюс-слово возвращает истину
                   })
                 ) {
-                  res_arr.push(this);
+                  res_arr.push(post);
                 } //добавляем в итоговый массив
                 {
                   if (
@@ -111,13 +107,18 @@ function get_page_content(options, restricts, badrestricts) {
                       return post.content.indexOf(r.toLowerCase()) >= 0; //если найдено плюс-слово возвращает истину
                     })
                   ) {
-                    res_arr.push(this); //добавляем в итоговый массив
+                    res_arr.push(post); //добавляем в итоговый массив
                   }
                 }
               }
             });
           }
         });
+        console.log(itemsProcessed + " " + newses.length);
+        if (itemsProcessed === newses.length) {
+          console.log(res_arr.length);
+          res.send(res_arr);
+        }
       });
     }
   });
@@ -137,15 +138,16 @@ function resolveAfterGetpage(link) {
         //console.log($('.item-description').html())
         post.content = $(".item-description").html(); //item-address__string
         post.adress = $(".item-address__string").text();
-        console.log($(".item-description").html());
-        resolve(post);
       } else {
         console.log("Произошла ошибка: " + error);
       }
     });
   });
 }
-
+async function get_post_content(link) {
+  const a = resolveAfterGetpage(link);
+  return await a;
+}
 /*cont.find('span').each(function () {
                        if ($(this)[0].children[0])
                            if($(this)[0].children[0].data!=="В избранное" && $(this)[0].children[0].data!== '') { //находим название товара
